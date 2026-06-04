@@ -1,1 +1,1 @@
-ADD r0 r1 r3
+add ra rb rc
