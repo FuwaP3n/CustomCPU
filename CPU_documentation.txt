@@ -1,0 +1,165 @@
+Table of Contents
+	*Diagramm
+	*CPU
+		- ALU
+			Basic operations
+			Conditions
+		- Oppcodes
+			Normal
+			Special
+		- Registers
+			Multi-purpose
+		- Counter
+		- RAM
+		- I/O
+		- CFLAG
+	*List of commands
+		- CMD
+		- Input A
+		- Input B
+		- Output
+		- Special condition
+	*Examples on assembly
+	*Examples on C
+	*How to create own programm
+
+
+CPU
+Central process unit contains ALU, 5 multi purpose registers, CFLAG register, two counters, RAM, oppcode module a.k.a decoder and I/O.
+The special thing about this CPU is it register can output values on A and B bus and write the output to the output bus. It means that CPU can take value from one register and value from other register and on top of that output this value to other register in one step.
+The architecture of this cpu is 8bit, but command length is 16bit. It was done like that to make possible do arithmetic faster.
+The command structure looks like that:
+ 00000 0000 000 0000
+ Cmd   A    B   Out
+
+Where Cmd is a command, A is number of register to put value from on bus A, B is the same as A, but for B bus and Out is an output.
+You can see that A and B are different sizes. It is done because I couldn't use 17bit long commands and I must have been sacrifised B bus for some space.
+
+Also command structure could look like that:
+ 00000 00000000 000
+ CMD   Value    Out
+
+Where Cmd is a command, Value is value from ROM, and Out is an output.
+Yes, you can write values from ROM and sorry, but you can't do any operations directly on them.
+First of all, out now is only 3bits. It means that you can't directly write values from ROM to special registers like IP(instruction pointer), RP(ram pointer) and CFLAG. You can only write it down to a multi purpose register or into the ram. There are currently two ways to write it into the ram.
+
+Bassically, when you are using first structure, values from registers goes through ALU first and only then on input register bus. When second structure, value from ROM will be put on input bus directly.
+
+ALU
+Arithmetic logic unit can do several total of 12 operation. Which are adding, subbing, multiplying, bitshifting, negotiate and bitwise OR, NOR, XOR, XNOR, AND, NAND. To do these basic operations, ALU getting values from A and B busses and by decoding oppcode activating needed module. After it is outputing answer on output bus.
+ALU also contains Condition module. Condition module works same as ALU. It gets values from A and B bus, comparing them and outputing result to output bus, which lead output to special register called CFLAG. You should know that it is obviously possible to output answer of condition to a register, but it is usseless.
+You should also know where ALU is in CPU and why you can put two different command structures. Bassically, all of the time when you try to use values from any register, it firstly comes through ALU. Of course there are commands that don't use all of the ALU modules and just skip it.
+Another command structure which uses value from rom, puts this value on register input bus directly from rom. This command also steals one bit from output space, so the output becomes 3 bit long.
+
+Oppcodes
+Oppcodes module is a decoder for a command. It divides command on parts and says what CPU should do.
+Normal oppcodes are those that aren't using additional speacial outputs on oppcode module.
+Special commands like JMP, JMPN, NUM, PUSH, PUSHN and POP are using additional outputs to work with specific logic for their commands. It also should be mentioned that these commands are writing specific values by them self to the out bits.
+
+Registers
+There are two kinds of registers: Multi-purpose and special.
+Multi-purpose registers can output their values on A or B bus. These registers are r0, r1, r2, r3, r4, MEM and I/O. MEM register is a RAM register. Despite having commands like PUSH and POP you can directly read a value from address.
+
+Special registers are IP, RP and CFLAG.
+IP register returns value from counter that provides address of instruction in ROM. RP register returns value from counter that provides address for RAM pointer. You can write into RP to set its pointer to specific address in RAM and then read the value.
+CFLAG currently contains only answer on last condition command. It is used only for JMP and JMPN commands.
+
+You can do mathematical operations with special registers, but keep in mind that they will output values only on A bus.
+
+Counter
+Counter is a specific module that counts, duh. There are two counters in CPU. One is a ROM counter(IP) and second is a RAM pointer(RP). IP will increment with a clock.
+
+RAM
+Currently there is 64byte RAM. It means that you can contain 64 8bit values there. You can ouptut RAM value by using commands POP or by any mathematical operation or COPY of course. It can ouput values on A or B bus. You can also put values into memory by any mathematical operation, COPY again and PUSH or PUSHN commands. You can also change value of address pointer by writing into RP register.
+
+I/O
+Input ouput register. It works like a simple multi-purpose register.
+
+CFLAG
+CFLAG register is a special register. It is only used to store outcome of the last condition command. It is also used by commands JMP, JMPN to check if they need to jump or not.
+
+
+
+LIST OF COMMANDS
+
+#	BIN	Assembly	Description
+0	00000	NUL		Do nothing
+1	00001	ADD		Add value from B bus to A and output it on a bus
+2	00010	SUB		Sub value B from A
+3	00011	MUL		Multiplie A on B. Currently works only with 4bit values. If you put 8bit value it will take only 4 first bits
+4	00100	OR			Bitwise OR
+5	00101 NOR		Bitwise NOR
+6	00110	AND		Bitwise AND
+7	00111	NAND		Yeah, you get it
+8	01000	XOR		I won't write what next bitwise commands do
+9	01001 XNOR
+10	01010	NEG
+11	01011 <<			Bitshift value A to the left B times. Max is 8 of course
+12 01100	>>			Bitshift value A to the right B times.
+13	01101				Empty command
+14	01110	>			Check if A is greater than B
+15 01111 <			Check if A is lower than B
+16 10000				Empty command
+17 10001	==			Check if A equals B
+18 10010 >=			Check if A greater or equals B
+19 10011 <=			Check if A lower of equals B
+20 10100	!=			Check if A doesn't equal B
+21 10101				Empty command
+22	10110	COPY		Copy value from register A
+23 10111 NUM		Copy value from ROM to any multi-purpose register
+24	11000	JMP		Jump to instruction row from register A if last condition was True
+25 11001 JMPN		Jump to instruction row from ROM, if last condition was True
+26 11010	POP		Decrease RP and output value on A bus
+27 11011 PUSH		Write value from register A to RAM and increase RP
+28 11100 PUSHN		Write value from ROM to RAM and increase RP
+29 11101 HALT		Stop the clock
+30 11110				Empty
+31	11111				Empty
+
+INPUT A
+0	0000	NUL		Ouputs zero
+1	0001	IO			Output value from I/O register
+2	0010	r0			 /
+3	0011	r1			|
+4	0100	r2			| Multi purpose registers
+5	0101	r3			|
+6	0110	r4			 \
+7	0111	MEM		Output value from MEM register
+8	1000	RP			Output value of RAM pointer on A bus
+9	1001	IP			Output value on bus A from Instruction Pointer
+10	1010	CFLAG		Output value of CFLAG register on A bus
+
+INPUT B
+0	000	NUL		Ouputs zero
+1	001	IO			Output value from I/O register
+2	010	r0			 /
+3	011	r1			|
+4	100	r2			| Multi purpose registers
+5	101	r3			|
+6	110	r4			 \
+7	111	MEM		Output value from MEM register
+
+OUTPUT
+0	0000	NUL		Write to nothing
+1	0001	IO			Output value to I/O register
+2	0010	r0			 /
+3	0011	r1			|
+4	0100	r2			| Multi purpose registers
+5	0101	r3			|
+6	0110	r4			 \
+7	0111	MEM		Output value to MEM register or RAM
+8	1000	RP			Output value to RAM pointer
+9	1001	IP			Output value to Instruction Pointer
+10	1010	CFLAG		Output value to CFLAG register
+
+Special conditions
+CMD	BIN					Description
+NEG	01010| A||B| OUT	It will take value only from Input A, B bits would be ignored
+COPY	10110| A||B| OUT	It will ignore B bits
+NUM	10111| value|OUT	8bit value will be put into out. Out is 3bit long
+JMP	11000| A||B| OUT It will ignore B bits
+JMPN	11001| value|000	You must put 000 to OUT bits, Assembly will do it automatically.
+POP	11010|ZERO | OUT	A bits must be zeros and B bits will be ignored. Assembly will do it automatically. It also puts value on A bus.
+PUSH	11011| A||0|0111	B bits will be ignored and you must put 0111 for out bits. Assembly will do it automatically.
+PUSHN	11011|VALUE |111	You should put 111 to out bits. Also out bits are 3bit long. Assembly will do it automatically.
+HALT	11100|ZERO     |	All of the bits that aren't command must be zeros. Assembly will do it automatically
