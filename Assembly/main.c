@@ -81,9 +81,9 @@ int translate(char * word){
 	return 0;
 }
 
-int next_word(FILE *fptr, char * output){
-	if(fptr==NULL){ return 1; }
-	char c;
+int next_word(FILE *fptr, char * output){ // return codes:	0 - fine
+	if(fptr==NULL){ return 1; }				// 					1 - error
+	char c;											//						-1 - EOF
 	int i=0;
 	while(true){
 		c = fgetc(fptr);
@@ -100,12 +100,33 @@ int main(int argc, char * argv){
 	char * filename = "testcase.txt";	
 	FILE * file = fopen(filename, "r");
 	if(file == NULL){ printf("File not found!\n"); return 1; }
-	
+	// CODE FOR NUMBER DETECTION FOR NUM AND *N COMMANDS!!!!!!!
 	char word[5];
+	char binary[17];
+	int special=0;
+	int step = 0;
+	char cmd[6];
+	char inputA[5];
+	char inputB[4];
+	char output[5];
 	while(true){
 		int exit_code = next_word(file, word);
 		printf("%s %d\n", word, translate(word));
 		if(exit_code==-1){ break; }
+		if(exit_code==1) { printf("something wrong!\n"); break;}
+
+		switch(step){
+			case 1:
+				
+				break;
+			case 2:
+				break;
+			case 3:
+				break;
+			default:
+				
+				break;
+		}
 	}
 	fclose(file);
 	return 0;
