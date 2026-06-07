@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 struct CODES {
 	char CMD[5];
@@ -56,9 +57,34 @@ struct CODES A[11] = {
 {"CFLAG","1010",5}
 };
 
-int translate(char * word){
+
+int binary(char * str, int line){
+	int size = strlen(str);
+	int res=0;
+	int power=0;
+	for(int i=size; i>1; --i){
+		if(power>7){ printf("Warning: binary number on line %d, contains more than 8bit. Readed only 8 last bits.", line); break; }
+		res=res+((int)str[i]-48)*pow(2, power);
+		power++;
+
+	}
+	return res;
+}
+int hex(char * str){}
+int dec(char * str){}
+
+int translate(char * word, int line){
 
 	int size = strlen(word);
+
+	if(word[0]>47 && word[0]<58){
+		if(size>2){ 
+			if(word[1]=='b'){ return binary(word, line); }
+			else if(word[1]=='x'){ return hex(word); }
+		}
+		return dec(word);
+	}
+
 	for(int i=0; i<32; i++){
 		if(size==CMD[i].size){
 			for(int x=0; x<=size; x++){
@@ -81,14 +107,15 @@ int translate(char * word){
 	return 0;
 }
 
-int next_word(FILE *fptr, char * output){ // return codes:	0 - fine
+int next_word(FILE *fptr, char * output, int * line_num){ // return codes:	0 - fine
 	if(fptr==NULL){ return 1; }				// 					1 - error
 	char c;											//						-1 - EOF
 	int i=0;
 	while(true){
 		c = fgetc(fptr);
 		if(c==EOF){output[i]='\0'; return -1; }
-		if(c==' ' || c=='\n'){ output[i]='\0'; return 0; }
+		if(c==' '){ output[i]='\0'; return 0; }
+		if(c=='\n'){ output[i]='\0'; *line_num = *line_num + 1; return 0; }
 		output[i]=c;	
 		i++;
 	}
@@ -99,34 +126,17 @@ int next_word(FILE *fptr, char * output){ // return codes:	0 - fine
 int main(int argc, char * argv){
 	char * filename = "testcase.txt";	
 	FILE * file = fopen(filename, "r");
+	int CurrentLine = 0;
 	if(file == NULL){ printf("File not found!\n"); return 1; }
 	// CODE FOR NUMBER DETECTION FOR NUM AND *N COMMANDS!!!!!!!
 	char word[5];
-	char binary[17];
-	int special=0;
-	int step = 0;
-	char cmd[6];
-	char inputA[5];
-	char inputB[4];
-	char output[5];
+
 	while(true){
-		int exit_code = next_word(file, word);
-		printf("%s %d\n", word, translate(word));
+		int exit_code = next_word(file, word, &CurrentLine);
+		printf("%s %d\n", word, translate(word, CurrentLine));
 		if(exit_code==-1){ break; }
 		if(exit_code==1) { printf("something wrong!\n"); break;}
-
-		switch(step){
-			case 1:
-				
-				break;
-			case 2:
-				break;
-			case 3:
-				break;
-			default:
-				
-				break;
-		}
+		
 	}
 	fclose(file);
 	return 0;
