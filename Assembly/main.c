@@ -3,6 +3,21 @@
 #include <string.h>
 #include <math.h>
 
+//WARNINGS
+bool UNKNOWN_WARNING = false;
+bool LONGER_BINARY_WARNING = false;
+bool LONGER_HEX_WARNING = false;
+bool LONGER_DEC_WARNING = false;
+bool GREATER_SMALLER_DEC_WARNING = false;
+
+
+
+struct KOSTYL {
+	char character;
+};
+
+char HEX[16][1] = {{'0'}, {'1'}, {'2'}, {'3'}, {'4'}, {'5'}, {'6'}, {'7'}, {'8'}, {'9'}, {'a'}, {'b'}, {'c'}, {'d'}, {'e'}, {'f'}};
+
 struct CODES {
 	char CMD[5];
 	char bin[5];
@@ -57,32 +72,85 @@ struct CODES A[11] = {
 {"CFLAG","1010",5}
 };
 
+void throw_warning(int warning, int line, char * function){
+	switch(warning){
+		case 0:
+			if(!LONGER_BINARY_WARNING){ break; }
+			printf("WARNING: binary number on line %d is longer than 8bits. Readed only last 8bits of a number.\n", line);
+			break;
+		case 1:
+			if(!LONGER_HEX_WARNING){ break; }
+			printf("WARNING: hex number on line %d is longer than 2 characters. Readed only last 2 characters.\n", line);
+			break;
+		case 2:
+			if(!LONGER_DEC_WARNING){ break; }
+			printf("WARNING: decimal number on line %d is longer than 3 characters. Readed only last 3 characters.\n", line);
+			break;
+		case 3:
+			if(!GREATER_SMALLER_DEC_WARNING){ break; }
+			printf("WARNING: decimal number on line %d is greater or less than 255. Number translated as 255 or -255.\n", line);
+			break;
+		default:
+			if(!UNKNOWN_WARNING){ break; }
+			printf("WARNING: Unknown warning error_num: %d, line: %d, from function: %s\n", error, line, function);
+			break;
+	}
+}
+
+
 
 int binary(char * str, int line){
 	int size = strlen(str);
 	int res=0;
 	int power=0;
 	for(int i=size; i>1; --i){
-		if(power>7){ printf("Warning: binary number on line %d, contains more than 8bit. Readed only 8 last bits.", line); break; }
+		if(power>7){ throw_warning(0, line, "\"int binary(char * str, int line\"");  break; }
 		res=res+((int)str[i]-48)*pow(2, power);
 		power++;
 
 	}
 	return res;
 }
-int hex(char * str){}
-int dec(char * str){}
+int hex(char * str, int line){
+	int size = strlen(str);
+	int res = 0;
+	int power=0;
+	for(int i=size; i>1; --i){
+		if(power>1){ throw_warning(1, line, "\"int hex(char * str, int line)\""); break; }
+		for(int x=0; x<16; x++){
+			if((int)str[i]==HEX[x][0] || (int)str[i]==HEX[x][0]-32){ res=res+x*pow(16, power); break; }
+		}
+		power++;
+	}
+	return res;
+}
+int dec(char * str, int line){
+	int size = strlen(str);
+	int res = 0;
+	int power=0;
+	bool is_negative = false;
+	if(str[0]=='-'){ is_negative = true; }
+	for(int i=size; i>1; --i){
+		if(power>1 && is_negative){ break; }
+		else { throw_warning(2, line, "\"int dec(char * str, int line\""); break;}
+		res=res+(int)str[i]*pow(10, power);
+		power++;
+	}
+	if(res>255){ res=255; throw_warning(3, line, "\"int dec(char * str, int line\""); }
+	if(is_negative){ res = res*-1; }
+	return res;
+}
 
 int translate(char * word, int line){
 
 	int size = strlen(word);
 
-	if(word[0]>47 && word[0]<58){
+	if((word[0]>47 && word[0]<58) || word[0]=='-'){
 		if(size>2){ 
 			if(word[1]=='b'){ return binary(word, line); }
-			else if(word[1]=='x'){ return hex(word); }
+			else if(word[1]=='x'){ return hex(word, line); }
 		}
-		return dec(word);
+		return dec(word, line);
 	}
 
 	for(int i=0; i<32; i++){
@@ -107,9 +175,9 @@ int translate(char * word, int line){
 	return 0;
 }
 
-int next_word(FILE *fptr, char * output, int * line_num){ // return codes:	0 - fine
-	if(fptr==NULL){ return 1; }				// 					1 - error
-	char c;											//						-1 - EOF
+int next_word(FILE * fptr, char * output, int * line_num){
+	if(fptr==NULL){ return 1; }
+	char c;
 	int i=0;
 	while(true){
 		c = fgetc(fptr);
@@ -127,15 +195,13 @@ int main(int argc, char * argv){
 	char * filename = "testcase.txt";	
 	FILE * file = fopen(filename, "r");
 	int CurrentLine = 0;
-	if(file == NULL){ printf("File not found!\n"); return 1; }
-	// CODE FOR NUMBER DETECTION FOR NUM AND *N COMMANDS!!!!!!!
+	if(file == NULL){ printf("ERROR: File not found!\n"); return 1; }
 	char word[5];
-
 	while(true){
 		int exit_code = next_word(file, word, &CurrentLine);
 		printf("%s %d\n", word, translate(word, CurrentLine));
 		if(exit_code==-1){ break; }
-		if(exit_code==1) { printf("something wrong!\n"); break;}
+		if(exit_code==1) { printf("ERROR: something wrong in \"int next_word(FILE * fptr, char * output, int * line_num)\" on line %d!\n", CurrentLine); break;}
 		
 	}
 	fclose(file);

@@ -1,0 +1,19 @@
+!! THIS LIST WILL BE APPENDING TIME TO TIME
+
+
+CURRENT FOCUS:
+- ASSEMBLY
+
+Current tasks:
+- write translation commands to numbers
+
+TEST:
+- int binary function
+- int hex function
+- int dec function
+- void trow_warning(int warning, int line, char * function)
+
+
+
+Additional tasks:
+- rewrite int hex(char * str, int line);
