@@ -6,6 +6,8 @@ CURRENT FOCUS:
 
 Current tasks:
 - write translation commands to numbers
+- write throw_error
+- add errors to num translation commands
 
 TEST:
 - int binary function

@@ -10,11 +10,7 @@ bool LONGER_HEX_WARNING = true;
 bool LONGER_DEC_WARNING = true;
 bool GREATER_SMALLER_DEC_WARNING = true;
 
-
-
-struct KOSTYL {
-	char character;
-};
+bool ABORT = false;
 
 char HEX[16][1] = {{'0'}, {'1'}, {'2'}, {'3'}, {'4'}, {'5'}, {'6'}, {'7'}, {'8'}, {'9'}, {'a'}, {'b'}, {'c'}, {'d'}, {'e'}, {'f'}};
 
@@ -71,6 +67,10 @@ struct CODES A[11] = {
 {"IP",  "1001", 2},
 {"CFLAG","1010",5}
 };
+
+int throw_error(int error, int line, char * function){
+	return 1;
+}
 
 void throw_warning(int warning, int line, char * function){
 	switch(warning){
@@ -195,8 +195,9 @@ int main(int argc, char * argv){
 	FILE * file = fopen(filename, "r");
 	int CurrentLine = 0;
 	if(file == NULL){ printf("ERROR: File not found!\n"); return 1; }
-	char word[5];
+	char word[255];
 	while(true){
+		if(ABORT){ break; }
 		int exit_code = next_word(file, word, &CurrentLine);
 		printf("%s %d\n", word, translate(word, CurrentLine));
 		if(exit_code==-1){ break; }
