@@ -4,11 +4,11 @@
 #include <math.h>
 
 //WARNINGS
-bool UNKNOWN_WARNING = false;
-bool LONGER_BINARY_WARNING = false;
-bool LONGER_HEX_WARNING = false;
-bool LONGER_DEC_WARNING = false;
-bool GREATER_SMALLER_DEC_WARNING = false;
+bool UNKNOWN_WARNING = true;
+bool LONGER_BINARY_WARNING = true;
+bool LONGER_HEX_WARNING = true;
+bool LONGER_DEC_WARNING = true;
+bool GREATER_SMALLER_DEC_WARNING = true;
 
 
 
@@ -92,7 +92,7 @@ void throw_warning(int warning, int line, char * function){
 			break;
 		default:
 			if(!UNKNOWN_WARNING){ break; }
-			printf("WARNING: Unknown warning error_num: %d, line: %d, from function: %s\n", error, line, function);
+			printf("WARNING: Unknown warning error_num: %d, line: %d, from function: %s\n", warning, line, function);
 			break;
 	}
 }
@@ -103,9 +103,9 @@ int binary(char * str, int line){
 	int size = strlen(str);
 	int res=0;
 	int power=0;
-	for(int i=size; i>1; --i){
+	for(int i=size-1; i>1; i--){
 		if(power>7){ throw_warning(0, line, "\"int binary(char * str, int line\"");  break; }
-		res=res+((int)str[i]-48)*pow(2, power);
+		res=res+(int)(str[i]-'0')*pow(2, power);
 		power++;
 
 	}
@@ -115,7 +115,7 @@ int hex(char * str, int line){
 	int size = strlen(str);
 	int res = 0;
 	int power=0;
-	for(int i=size; i>1; --i){
+	for(int i=size-1; i>1; i--){
 		if(power>1){ throw_warning(1, line, "\"int hex(char * str, int line)\""); break; }
 		for(int x=0; x<16; x++){
 			if((int)str[i]==HEX[x][0] || (int)str[i]==HEX[x][0]-32){ res=res+x*pow(16, power); break; }
@@ -128,16 +128,15 @@ int dec(char * str, int line){
 	int size = strlen(str);
 	int res = 0;
 	int power=0;
-	bool is_negative = false;
-	if(str[0]=='-'){ is_negative = true; }
-	for(int i=size; i>1; --i){
-		if(power>1 && is_negative){ break; }
-		else { throw_warning(2, line, "\"int dec(char * str, int line\""); break;}
-		res=res+(int)str[i]*pow(10, power);
+	int is_negative = 0;
+	if(str[0]=='-'){ is_negative = 1; }
+	for(int i=size-1; i>=is_negative; i--){
+		if(power>2){ throw_warning(2, line, "\"int dec(char * str, int line\""); break; }
+		res=res+(int)(str[i]-'0')*pow(10, power);
 		power++;
 	}
 	if(res>255){ res=255; throw_warning(3, line, "\"int dec(char * str, int line\""); }
-	if(is_negative){ res = res*-1; }
+	if(is_negative){ res = -res; }
 	return res;
 }
 
