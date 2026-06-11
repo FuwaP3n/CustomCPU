@@ -9,6 +9,7 @@ bool LONGER_BINARY_WARNING = true;
 bool LONGER_HEX_WARNING = true;
 bool LONGER_DEC_WARNING = true;
 bool GREATER_SMALLER_DEC_WARNING = true;
+bool UNKNOWN_INSTRUCTION_WARNING = true;
 
 bool ABORT = false;
 
@@ -67,10 +68,18 @@ struct CODES A[11] = {
 {"IP",  "1001", 2},
 {"CFLAG","1010",5}
 };
-
-int throw_error(int error, int line, char * function){
-	return 1;
+void throw_error(int error, int line, char * carg, int * iarg){
+	ABORT = true;
+	switch(error){
+		case 0:
+			printf("ERROR: Unexpected character \"%c\" on position (%d, %d)\n", *carg, *iarg+1, line);
+			break;
+		default:
+			printf("ERROR: Unknown error while reading line %d\n", line);
+			break;
+	}
 }
+
 
 void throw_warning(int warning, int line, char * function){
 	switch(warning){
@@ -90,6 +99,9 @@ void throw_warning(int warning, int line, char * function){
 			if(!GREATER_SMALLER_DEC_WARNING){ break; }
 			printf("WARNING: decimal number on line %d is greater or less than 255. Number translated as 255 or -255.\n", line);
 			break;
+		case 4:
+			if(!UNKNOWN_INSTRUCTION_WARNING){ break; }
+			printf("WARNING: Unknown instruction occured on line %d. Translated to NULL instruction.\n", line);
 		default:
 			if(!UNKNOWN_WARNING){ break; }
 			printf("WARNING: Unknown warning error_num: %d, line: %d, from function: %s\n", warning, line, function);
@@ -105,7 +117,9 @@ int binary(char * str, int line){
 	int power=0;
 	for(int i=size-1; i>1; i--){
 		if(power>7){ throw_warning(0, line, "\"int binary(char * str, int line\"");  break; }
-		res=res+(int)(str[i]-'0')*pow(2, power);
+		int num = (int)(str[i]-'0');
+		if(num != 0 && num != 1){ throw_error(0, line, &str[i], &i); return 0; }
+		res=res+num*pow(2, power);
 		power++;
 
 	}
@@ -119,6 +133,7 @@ int hex(char * str, int line){
 		if(power>1){ throw_warning(1, line, "\"int hex(char * str, int line)\""); break; }
 		for(int x=0; x<16; x++){
 			if((int)str[i]==HEX[x][0] || (int)str[i]==HEX[x][0]-32){ res=res+x*pow(16, power); break; }
+			throw_error(0, line, &str[i], &i);	return 0;
 		}
 		power++;
 	}
@@ -132,7 +147,9 @@ int dec(char * str, int line){
 	if(str[0]=='-'){ is_negative = 1; }
 	for(int i=size-1; i>=is_negative; i--){
 		if(power>2){ throw_warning(2, line, "\"int dec(char * str, int line\""); break; }
-		res=res+(int)(str[i]-'0')*pow(10, power);
+		int num = (int)(str[i]-'0');
+		if(num > 9 || num < 0){ throw_error(0, line, &str[i], &i); return 0; }
+		res=res+num*pow(10, power);
 		power++;
 	}
 	if(res>255){ res=255; throw_warning(3, line, "\"int dec(char * str, int line\""); }
@@ -141,7 +158,7 @@ int dec(char * str, int line){
 }
 
 int translate(char * word, int line){
-
+	if(word[0] == ' '){ return 0;}
 	int size = strlen(word);
 
 	if((word[0]>47 && word[0]<58) || word[0]=='-'){
@@ -170,23 +187,25 @@ int translate(char * word, int line){
 			}
 		}
 	}
-
+	throw_warning(4, line, NULL);
 	return 0;
 }
 
-int next_word(FILE * fptr, char * output, int * line_num){
-	if(fptr==NULL){ return 1; }
+bool next_word(FILE * fptr, char * output, int * line_num){
+	if(fptr==NULL){ ABORT = true; printf("ERROR: File not found!\n"); return false; }
 	char c;
 	int i=0;
 	while(true){
 		c = fgetc(fptr);
-		if(c==EOF){output[i]='\0'; return -1; }
-		if(c==' '){ output[i]='\0'; return 0; }
-		if(c=='\n'){ output[i]='\0'; *line_num = *line_num + 1; return 0; }
+		if(c==EOF){output[i]='\0'; return true; }
+		if(c==' '){ output[i]='\0'; return false; }
+		if(c=='\n'){ output[i]='\0'; *line_num = *line_num + 1; return false; }
 		output[i]=c;	
 		i++;
 	}
-	return 1;
+	printf("ERROR: Unknown error on line %d in function bool next_word.\nYou aren't suppose to it tho.\n", line_num);
+	ABORT = true;
+	return false;
 }
 
 
@@ -198,11 +217,9 @@ int main(int argc, char * argv){
 	char word[255];
 	while(true){
 		if(ABORT){ break; }
-		int exit_code = next_word(file, word, &CurrentLine);
+		int EndOfFile = next_word(file, word, &CurrentLine);
 		printf("%s %d\n", word, translate(word, CurrentLine));
-		if(exit_code==-1){ break; }
-		if(exit_code==1) { printf("ERROR: something wrong in \"int next_word(FILE * fptr, char * output, int * line_num)\" on line %d!\n", CurrentLine); break;}
-		
+		if(EndOfFile==true){ break; }
 	}
 	fclose(file);
 	return 0;

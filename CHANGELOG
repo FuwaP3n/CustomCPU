@@ -1,1 +1,3 @@
-Tested and corrected functions int binary(), int dec() and int hex()
+Implemented function throw_error
+Added bool ABORT to abort program if error occurs
+And of course all things, which were added, are tested

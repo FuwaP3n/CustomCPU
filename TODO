@@ -5,17 +5,10 @@ CURRENT FOCUS:
 - ASSEMBLY
 
 Current tasks:
-- write translation commands to numbers
-- write throw_error
-- add errors to num translation commands
+- Make a working line translation to 16bit code
+
 
 TEST:
-- int binary function
-- int hex function
-- int dec function
-- void trow_warning(int warning, int line, char * function)
-
-
 
 Additional tasks:
 - rewrite int hex(char * str, int line);
