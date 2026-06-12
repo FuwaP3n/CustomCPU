@@ -5,10 +5,14 @@ CURRENT FOCUS:
 - ASSEMBLY
 
 Current tasks:
-- Make a working line translation to 16bit code
-
+- Comments to assembly
+- Make an output to file
+- Add flags for the command
 
 TEST:
+- Construct
+
 
 Additional tasks:
 - rewrite int hex(char * str, int line);
+- rewrite void to_bin

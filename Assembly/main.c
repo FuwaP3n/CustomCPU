@@ -68,6 +68,8 @@ struct CODES A[11] = {
 {"IP",  "1001", 2},
 {"CFLAG","1010",5}
 };
+
+
 void throw_error(int error, int line, char * carg, int * iarg){
 	ABORT = true;
 	switch(error){
@@ -109,6 +111,19 @@ void throw_warning(int warning, int line, char * function){
 	}
 }
 
+void to_bin(int num, char * output){
+	strcpy(output, "00000000");
+	if(num<0) { output[0] = '1'; num = -(num+1); }
+	else if(num>127){output[0]= '1'; num = num - 128; }
+	if(num>63 ){ output[1] = '1'; num = num -  64; }
+	if(num>31 ){ output[2] = '1'; num = num -  32; }
+	if(num>15 ){ output[3] = '1'; num = num -  16; }
+	if(num>7  ){ output[4] = '1'; num = num -   8; }
+	if(num>3  ){ output[5] = '1'; num = num -   4; }
+	if(num>1  ){ output[6] = '1'; num = num -   2; }
+	if(num>0  ){ output[7] = '1'; }
+	output[8] = '\0';
+}
 
 
 int binary(char * str, int line){
@@ -157,6 +172,7 @@ int dec(char * str, int line){
 	return res;
 }
 
+
 int translate(char * word, int line){
 	if(word[0] == ' '){ return 0;}
 	int size = strlen(word);
@@ -199,7 +215,7 @@ bool next_word(FILE * fptr, char * output, int * line_num){
 		c = fgetc(fptr);
 		if(c==EOF){output[i]='\0'; return true; }
 		if(c==' '){ output[i]='\0'; return false; }
-		if(c=='\n'){ output[i]='\0'; *line_num = *line_num + 1; return false; }
+		if(c=='\n'){ output[i]='\0'; *line_num = *line_num + 1; return true; }
 		output[i]=c;	
 		i++;
 	}
@@ -209,17 +225,97 @@ bool next_word(FILE * fptr, char * output, int * line_num){
 }
 
 
+int Construct(int cmd, int a, int b, int c, char * output){
+	char * inputA = output + 5;
+	char * inputB = inputA + 4;
+	char * out =    inputB + 3;
+	strcpy(output, CMD[cmd].bin);
+
+	if(cmd==10){ //NEG
+		strcpy(inputA, A[a].bin);
+		strcpy(inputB, "000");
+		strcpy(out, A[b].bin);
+	} else if(cmd>13&&cmd<21){ //COMPARASIONS
+		strcpy(inputA, A[a].bin);
+		strcpy(inputB, &A[b].bin[1]);
+		strcpy(out, "1010");
+	} else if(cmd==22){ // COPY
+		strcpy(inputA, A[a].bin);
+		strcpy(inputB, "000");
+		strcpy(out, A[b].bin);
+	} else if(cmd==23){ // NUM
+		char * x = malloc(8);
+		to_bin(a, x);
+		strcpy(inputA, x);
+		free(x);
+		strcpy(out+1, &A[b].bin[1]);
+	} else if(cmd==24){ //JMP
+		strcpy(inputA, A[a].bin);
+		strcpy(inputB, "0000000");
+	} else if(cmd==25){ //JMPN
+		char * x = malloc(8);
+		to_bin(a, x);
+		strcpy(inputA, x);
+		free(x);
+		strcpy(out+1, "000");
+	} else if(cmd==26){ //POP
+		strcpy(inputA, "0000000");
+		strcpy(out, A[a].bin);
+	} else if(cmd==27){ //PUSH
+		strcpy(inputA, A[a].bin);
+		strcpy(inputB, "0000111");
+	} else if(cmd==28){ //PUSHN
+		char * x = malloc(8);
+		to_bin(a, x);
+		strcpy(inputA, x);
+		free(x);
+		strcpy(out+1, "111");
+	} else if(cmd==29){ //HALT
+		strcpy(inputA, "00000000000");
+	} else {
+		strcpy(inputA, A[a].bin);
+		strcpy(inputB, &A[b].bin[1]);
+		strcpy(out, A[c].bin);	
+	}
+	output[16] = '\0';
+}
+
+
+
+
 int main(int argc, char * argv){
 	char * filename = "testcase.txt";	
 	FILE * file = fopen(filename, "r");
 	int CurrentLine = 0;
 	if(file == NULL){ printf("ERROR: File not found!\n"); return 1; }
 	char word[255];
+	char LINE[255];
+
 	while(true){
+		for(int i=0; i<255; i++){ LINE[i]=' '; }
+		int LINE_PTR = 4;
+		sprintf(LINE, "%d", CurrentLine);
+		LINE[strlen(LINE)] = ' ';
+		int whole_line[4] = {0, 0, 0, 0};
+		for(int i=0; i<4; i++){
+			bool is_next_line = next_word(file, word, &CurrentLine);
+			if(word[0] == '\0' && !is_next_line){ i=i-1; continue; }
+			whole_line[i] = translate(word, CurrentLine);
+			sprintf(&LINE[LINE_PTR], "%s", word);
+			LINE_PTR = LINE_PTR + strlen(word) + 1;
+			LINE[strlen(LINE)] = ' ';
+			if(ABORT){ break; }
+			if(is_next_line){ break; }
+		}
 		if(ABORT){ break; }
-		int EndOfFile = next_word(file, word, &CurrentLine);
-		printf("%s %d\n", word, translate(word, CurrentLine));
-		if(EndOfFile==true){ break; }
+		if(whole_line[0] != 13){ 
+			char result[16];
+			Construct(whole_line[0], whole_line[1], whole_line[2], whole_line[3], result);
+			sprintf(&LINE[32], "%s\n", result);
+			printf("%s", LINE); 
+		}
+		if(feof(file)){ break; }
+		if(ABORT){ break; }
 	}
 	fclose(file);
 	return 0;
