@@ -5,14 +5,12 @@ CURRENT FOCUS:
 - ASSEMBLY
 
 Current tasks:
-- Comments to assembly
-- Make an output to file
-- Add flags for the command
 
 TEST:
 - Construct
-
+- Overall function test
 
 Additional tasks:
+- rewrite Assembly/main.c for more clean code
 - rewrite int hex(char * str, int line);
 - rewrite void to_bin

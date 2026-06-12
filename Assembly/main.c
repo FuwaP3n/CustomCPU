@@ -11,6 +11,11 @@ bool LONGER_DEC_WARNING = true;
 bool GREATER_SMALLER_DEC_WARNING = true;
 bool UNKNOWN_INSTRUCTION_WARNING = true;
 
+//FLAGS
+bool LINE_NUMBER_OUT = false;
+bool ASM_LINE_OUT = false;
+bool BINARY_LINE_OUT = false; 
+
 bool ABORT = false;
 
 char HEX[16][1] = {{'0'}, {'1'}, {'2'}, {'3'}, {'4'}, {'5'}, {'6'}, {'7'}, {'8'}, {'9'}, {'a'}, {'b'}, {'c'}, {'d'}, {'e'}, {'f'}};
@@ -216,6 +221,14 @@ bool next_word(FILE * fptr, char * output, int * line_num){
 		if(c==EOF){output[i]='\0'; return true; }
 		if(c==' '){ output[i]='\0'; return false; }
 		if(c=='\n'){ output[i]='\0'; *line_num = *line_num + 1; return true; }
+		if(c=='#'){ 
+			output[i]='\0'; 
+			*line_num = *line_num + 1; 
+			char * buf = malloc(256);
+			fgets(buf, 256, fptr); 
+			free(buf); 
+			return true; 
+		}
 		output[i]=c;	
 		i++;
 	}
@@ -280,11 +293,36 @@ int Construct(int cmd, int a, int b, int c, char * output){
 	output[16] = '\0';
 }
 
+void convert_flags(char * flags){
+	int size = strlen(flags);
+	for(int i=0; i<size; i++){
+		switch(flags[i]){
+			case 'l':
+				LINE_NUMBER_OUT=true;
+				break;
+			case 'b':
+				BINARY_LINE_OUT=true;
+				break;
+			case 'a':
+				ASM_LINE_OUT=true;
+			default:
+				printf("Unknown flag %c\n", flags[i]);
+				break;
+		}
+	
+	}
+}
 
 
+int main(int argc, char * argv[]){
+	if(argc < 2){ printf("casm [input file] [flags]\n   flags: b - for binary output\n          a - for assembly output\n          l - for line output\n\n   Example: casm test.txt lab > out\n"); return 0;}
+	char filename[256];
+	strcpy(filename, argv[1]);
+	char outfile[256];
+	char flags[10];
+	if(argc > 2){ strcpy(flags, argv[2]); convert_flags(flags); }
+	else { LINE_NUMBER_OUT=true; BINARY_LINE_OUT=true; ASM_LINE_OUT=true; }
 
-int main(int argc, char * argv){
-	char * filename = "testcase.txt";	
 	FILE * file = fopen(filename, "r");
 	int CurrentLine = 0;
 	if(file == NULL){ printf("ERROR: File not found!\n"); return 1; }
@@ -293,17 +331,21 @@ int main(int argc, char * argv){
 
 	while(true){
 		for(int i=0; i<255; i++){ LINE[i]=' '; }
-		int LINE_PTR = 4;
-		sprintf(LINE, "%d", CurrentLine);
-		LINE[strlen(LINE)] = ' ';
+		int LINE_PTR = 0;
+		if(LINE_NUMBER_OUT){ LINE_PTR=4;
+			sprintf(LINE, "%d", CurrentLine);
+			LINE[strlen(LINE)] = ' ';
+		}
 		int whole_line[4] = {0, 0, 0, 0};
 		for(int i=0; i<4; i++){
 			bool is_next_line = next_word(file, word, &CurrentLine);
 			if(word[0] == '\0' && !is_next_line){ i=i-1; continue; }
 			whole_line[i] = translate(word, CurrentLine);
-			sprintf(&LINE[LINE_PTR], "%s", word);
-			LINE_PTR = LINE_PTR + strlen(word) + 1;
-			LINE[strlen(LINE)] = ' ';
+			if(ASM_LINE_OUT){
+				sprintf(&LINE[LINE_PTR], "%s", word);
+				LINE_PTR = LINE_PTR + strlen(word) + 1;
+				LINE[strlen(LINE)] = ' ';
+			}
 			if(ABORT){ break; }
 			if(is_next_line){ break; }
 		}
@@ -311,8 +353,15 @@ int main(int argc, char * argv){
 		if(whole_line[0] != 13){ 
 			char result[16];
 			Construct(whole_line[0], whole_line[1], whole_line[2], whole_line[3], result);
-			sprintf(&LINE[32], "%s\n", result);
-			printf("%s", LINE); 
+			if(BINARY_LINE_OUT){
+				LINE_PTR = 32;
+				if(!LINE_NUMBER_OUT){ LINE_PTR=LINE_PTR-4; }
+				if(!ASM_LINE_OUT){ LINE_PTR=LINE_PTR-28; }
+				sprintf(&LINE[LINE_PTR], "%s", result);
+				LINE_PTR = strlen(LINE);
+			}
+			LINE[LINE_PTR] = '\0';
+			printf("%s\n", LINE);
 		}
 		if(feof(file)){ break; }
 		if(ABORT){ break; }
