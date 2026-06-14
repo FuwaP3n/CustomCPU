@@ -58,7 +58,7 @@ Special commands like JMP, JMPN, NUM, PUSH, PUSHN and POP are using additional o
 
 Registers
 There are two kinds of registers: Multi-purpose and special.
-Multi-purpose registers can output their values on A or B bus. These registers are r0, r1, r2, r3, r4, MEM and I/O. MEM register is a RAM register. Despite having commands like PUSH and POP you can directly read a value from address.
+Multi-purpose registers can output their values on A or B bus. These registers are ra, rb, rc, rd, re, MEM and I/O. MEM register is a RAM register. Despite having commands like PUSH and POP you can directly read a value from address.
 
 Special registers are IP, RP and CFLAG.
 IP register returns value from counter that provides address of instruction in ROM. RP register returns value from counter that provides address for RAM pointer. You can write into RP to set its pointer to specific address in RAM and then read the value.
@@ -80,7 +80,7 @@ CFLAG register is a special register. It is only used to store outcome of the la
 
 
 
-LIST OF COMMANDS
+List of commands
 
 #	BIN	Assembly	Description
 0	00000	NUL		Do nothing
@@ -96,7 +96,7 @@ LIST OF COMMANDS
 10	01010	NEG
 11	01011 <<			Bitshift value A to the left B times. Max is 8 of course
 12 01100	>>			Bitshift value A to the right B times.
-13	01101				Empty command
+13	01101	INC		Increments value A by one and outputs it to OUT
 14	01110	>			Check if A is greater than B
 15 01111 <			Check if A is lower than B
 16 10000				Empty command
@@ -104,7 +104,7 @@ LIST OF COMMANDS
 18 10010 >=			Check if A greater or equals B
 19 10011 <=			Check if A lower of equals B
 20 10100	!=			Check if A doesn't equal B
-21 10101				Empty command
+21 10101	DEC		Decrements value A by one and ouputs it to OUT
 22	10110	COPY		Copy value from register A
 23 10111 NUM		Copy value from ROM to any multi-purpose register
 24	11000	JMP		Jump to instruction row from register A if last condition was True
@@ -119,11 +119,11 @@ LIST OF COMMANDS
 INPUT A
 0	0000	NUL		Ouputs zero
 1	0001	IO			Output value from I/O register
-2	0010	r0			 /
-3	0011	r1			|
-4	0100	r2			| Multi purpose registers
-5	0101	r3			|
-6	0110	r4			 \
+2	0010	ra			 /
+3	0011	rb			|
+4	0100	rc			| Multi purpose registers
+5	0101	rd			|
+6	0110	re			 \
 7	0111	MEM		Output value from MEM register
 8	1000	RP			Output value of RAM pointer on A bus
 9	1001	IP			Output value on bus A from Instruction Pointer
@@ -132,21 +132,21 @@ INPUT A
 INPUT B
 0	000	NUL		Ouputs zero
 1	001	IO			Output value from I/O register
-2	010	r0			 /
-3	011	r1			|
-4	100	r2			| Multi purpose registers
-5	101	r3			|
-6	110	r4			 \
+2	010	ra			 /
+3	011	rb			|
+4	100	rc			| Multi purpose registers
+5	101	rd			|
+6	110	re			 \
 7	111	MEM		Output value from MEM register
 
 OUTPUT
 0	0000	NUL		Write to nothing
 1	0001	IO			Output value to I/O register
-2	0010	r0			 /
-3	0011	r1			|
-4	0100	r2			| Multi purpose registers
-5	0101	r3			|
-6	0110	r4			 \
+2	0010	ra			 /
+3	0011	rb			|
+4	0100	rc			| Multi purpose registers
+5	0101	rd			|
+6	0110	re			 \
 7	0111	MEM		Output value to MEM register or RAM
 8	1000	RP			Output value to RAM pointer
 9	1001	IP			Output value to Instruction Pointer
@@ -163,3 +163,36 @@ POP	11010|ZERO | OUT	A bits must be zeros and B bits will be ignored. Assembly w
 PUSH	11011| A||0|0111	B bits will be ignored and you must put 0111 for out bits. Assembly will do it automatically.
 PUSHN	11011|VALUE |111	You should put 111 to out bits. Also out bits are 3bit long. Assembly will do it automatically.
 HALT	11100|ZERO     |	All of the bits that aren't command must be zeros. Assembly will do it automatically
+INC   01101| A||0| OUT  B bits will be ignored. Assembly will do it automatically.
+
+Assembly
+Assembly line usually contains mnemonic and 3 arguments. Mnemonic is the command(CMD), first one is INPUT A, second INPUT B and OUT. Of course there are special conditions.
+NEG, COPY, INC and DEC will accept first argument as register, which from value will be taken and second argument is an output.
+NUM will accept only number as a first argument and output as a second.
+POP will accept output as a first argument
+JMP will accept only register, which from value will be taken, as a first argument
+PUSH, will accept only register, which from value will be taken, as a first argument
+PUSHN and JMPN will accept only number as their first argument
+HALT will accept nothing as their arguments
+
+If you construct command incorrectly next will happen:
+	- if you replaced number with register, then register will be translated into a number. For example RA will be translated as 2
+	- if you add additional argument then nothing will happen. For example if you type POP RA RB, then RB will be ignored
+
+Of course it should be mentioned that arguments and mnemonic must be separated by space " " and there is no line separation by semi-colon.
+Also assembly isn't case sensitive, excluding labels. So, ADD, Add, aDD and aDd will be treated as the same mnemonic.
+
+*Numbers
+There are three different ways to put a number as argument.
+As binary 0b..... - replace dots with zeroes or ones. !!If the size of binary number excedes 8bits, assembly will throw warning and if you type any other character rather than 0 or 1, then assembly will throw error.
+You can also represent a number as hexadecimal by putting 0x before. !!If the size of hex number excedes 2 characters, assembly will throw warning and if you type any other character rather than 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e or f, then assembly will throw error.
+And of course you can represent character as a decimal, signed or unsigned by just typing it. !!If the size of hex number be greater than 255 or less than -128, assembly will throw warning and if you type any other character rather than 0, 1, 2, 3, 4, 5, 6, 7, 8 or 9, then assembly will throw error.
+
+*Labels
+Assembly can interpreter labels.
+You can create one by typing "name:", where name is your label name.
+Assembly would skip it as soon as it has ":" at the end, so you can put it on an empty line or on a line with code. Funnily enough, you can put it between arguments too.
+To use it, just put it as an argument without ":", assembly will translate it as a line where "name:" occured.
+!!Currently assembly supports only 255 labels and their name can't be long than 21 characters, excluding ":".
+Also labels are case sensitive and there can't two identical labels, assembly will throw error.
+If label was used without declaration, it would be treated as null and assembly will throw warning.

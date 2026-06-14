@@ -1,0 +1,2 @@
+gcc -lm -o run main.c
+

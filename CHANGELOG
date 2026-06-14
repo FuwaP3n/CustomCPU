@@ -1,3 +1,10 @@
-Implemented flags l, a and b for line output, asm code output and binary output
-Now main file can accept input file as a first argument
-You can now write comments in your assembly file with '#' character
+v0.1
+Fixed issues in Assembly/main.c
+Added function HELP to provide help
+Fixed smaller value that was -255 instead of -128
+Moved some printf("ERROR: ...) to funciton throw_error()
+Improved readability of Assembly/main.c
+Added files Emulator/build and Emulator/main.c
+Added mnemonics INC and DEC, more in CPU_documentation.txt(!NOT IMPLEMENTED IN DIGITAL LOGIC SIM ONLY IN ASSEMBLY)
+Added labels to assembly. See more in CPU_documentation.txt
+
