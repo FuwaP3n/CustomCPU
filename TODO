@@ -6,12 +6,17 @@ CURRENT FOCUS:
 
 Current tasks:
 - Add increment and decrement to architecture
-- Fix bug that occurs when undeclared label will throw warning of unknown instruction on a wrong line
 
 TEST:
 - Overall function test
 
 Additional tasks:
+- rewrite Assembly workflow. Maybe do direct conversion str->bin not str->dec->bin
 - rewrite Assembly/main.c for more clean code
 - rewrite int hex(char * str, int line);
 - rewrite void to_bin
+- Fix bug that occurs when undeclared label will throw warning of unknown instruction on a wrong line
+
+
+-!! Add carry flag to cflag register
+-!! Maybe consider making .h file for some structs

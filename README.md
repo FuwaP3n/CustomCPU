@@ -18,4 +18,4 @@ Im thinking on implementing C like programming language, but on my project map, 
 Currently officially supported only linux, but since I used mostly libc, I think you can easily compile binaries for windows with minGW.
 
 ## Additional
-Don't make push requests, since I m lazy ahh not programmer, who don't want to deal with merge, duh.
+Don't make any pull requests(yet), since I m lazy ahh not programmer, who don't want to deal with merge, duh.

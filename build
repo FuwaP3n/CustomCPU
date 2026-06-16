@@ -1,0 +1,3 @@
+gcc -lm -o asm asm.c
+gcc -lm -o emu emu.c
+

@@ -24,8 +24,8 @@ char HEX[16][1] = {{'0'}, {'1'}, {'2'}, {'3'}, {'4'}, {'5'}, {'6'}, {'7'}, {'8'}
 
 //structures 
 struct CODES {
-	char CMD[5];
-	char bin[5];
+	char CMD[6];
+	char bin[6];
 	int size;
 };
 
@@ -180,10 +180,10 @@ int hex(char * str, int line){
 	int power=0;
 	for(int i=size-1; i>1; i--){
 		if(power>1){ throw_warning(1, line, "\"int hex(char * str, int line)\""); break; }
-		for(int x=0; x<16; x++){
+		for(int x=0; x<17; x++){
+			if(x==16){ throw_error(0, line, &str[i], &i); return 0; }
 			if((int)str[i]==HEX[x][0] || (int)str[i]==HEX[x][0]-32){ res=res+x*pow(16, power); break; }
-			throw_error(0, line, &str[i], &i);	return 0;
-		}
+			}
 		power++;
 	}
 	return res;
@@ -357,6 +357,7 @@ void convert_flags(char * flags){
 				break;
 			case 'a':
 				ASM_LINE_OUT=true;
+				break; 
 			default:
 				printf("Unknown flag %c\n", flags[i]);
 				break;

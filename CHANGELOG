@@ -1,3 +1,11 @@
+v0.2
+Implemented basic emulator
+Moved files Assembly/main.c and Emulator/main.c to main directory
+Deleted directories Assembly and Emulator, because of their uselness
+Renamed files Assembly/main.c to asm.c and Emulator/main.c to emu.c
+Fixed bug with flag "a"
+Fixed bug with hex function, when hex number wasn't recognized.
+
 v0.1
 Fixed issues in Assembly/main.c
 Added function HELP to provide help
