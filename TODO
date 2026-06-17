@@ -6,9 +6,11 @@ CURRENT FOCUS:
 
 Current tasks:
 - Add increment and decrement to architecture
+- IO system for emulator
 
 TEST:
 - Overall function test
+
 
 Additional tasks:
 - rewrite Assembly workflow. Maybe do direct conversion str->bin not str->dec->bin

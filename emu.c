@@ -18,7 +18,21 @@
 #define IP 9
 #define CFLAG 10
 
+typedef struct {
+	char * old_string;
+	char * string;
+	int offset;
+} btr_string;
 
+typedef struct {
+	char name[25];
+	int size;
+} user_codes;
+
+user_codes u_cmd[2] = {
+{"change", 6},
+{"print", 5}
+};
 
 void HELP(){
 	printf("emu filename\n");
@@ -314,6 +328,26 @@ void UI_construct(char * out, char * line, uint8_t * reg){
 	}
 }
 
+btr_string to_btr_string(char * str){
+	int size = strlen(str);
+	char string1[size];
+	char string2[size];
+	btr_string string = {string1, string2, 0};
+	strcpy(string.old_string, str);	
+	strcpy(string.string, str);
+	return string;
+}
+
+void user_translate(char * str, int * args){
+	btr_string string = to_btr_string(str);
+	for(int i=0; string.old_string[i] != '\0'; i++){
+		if(string.string[i] = ' '){
+			string.string[i] = '\0';
+			
+		}
+	}
+}
+
 int main(int argc, char *argv[]){
 	if(argc<2){ HELP(); return 0; }
 	char * filename;
@@ -337,11 +371,13 @@ int main(int argc, char *argv[]){
 	char UI[256];
 	bool is_halt = false;
 	uint8_t ip = 0;
-	char interrupt[10];
+	char interrupt[255];
 	while(true){
 		if(is_halt){ 
 			is_halt=false;  
-			scanf("%c", &interrupt);
+			scanf("%s", &interrupt);
+			//user_translate();
+			//user_act();
 		}
 		
 		fgets(line, sizeof(line), CODE); //holy shit, this sequence worked
