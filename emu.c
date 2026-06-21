@@ -24,14 +24,24 @@ typedef struct {
 	int offset;
 } btr_string;
 
+
+#define U_CODE_SIZE = 10
 typedef struct {
-	char name[25];
+	char name[10];
 	int size;
 } user_codes;
 
-user_codes u_cmd[2] = {
-{"change", 6},
-{"print", 5}
+user_codes u_cmd[U_CODE_SIZE] = {
+{"step",    4},
+{"s",       1},
+{"continue",8},
+{"c",       1},
+{"register",8},
+{"r",       1},
+{"break",   5},
+{"b",       1},
+{"put",     3},
+{"p",       1}
 };
 
 void HELP(){
@@ -49,52 +59,52 @@ struct CODES {
 
 
 struct CODES CMD[32] = {
-{"NUL", "00000", 3},
-{"ADD", "00001", 3},
-{"SUB", "00010", 3},
-{"MUL", "00011", 3},
-{"OR",  "00100", 2},
-{"NOR", "00101", 3},
-{"AND", "00110", 3},
-{"NAND","00111", 4},
-{"XOR", "01000", 3},
-{"XNOR","01001", 4},
-{"NEG", "01010", 3},
-{"<<",  "01011", 2},
-{">>",  "01100", 2},
-{"INC", "01101", 3},
-{">",   "01110", 1},
-{"<",   "01111", 1},
-{"",    "10000", 0},
-{"==",  "10001", 2},
-{">=",  "10010", 2},
-{"<=",  "10011", 2},
-{"!=",  "10100", 2},
-{"DEC", "10101", 3},
-{"COPY","10110", 4},
-{"NUM", "10111", 3},
-{"JMP", "11000", 3},
-{"JMPN","11001", 4},
-{"POP", "11010", 3},
-{"PUSH","11011", 4},
-{"PUSHN","11100",5},
-{"HALT","11101", 4},
-{"",    "11110", 0},
-{"",    "11111", 0}
+{"NUL",  "00000", 3},
+{"ADD",  "00001", 3},
+{"SUB",  "00010", 3},
+{"MUL",  "00011", 3},
+{"OR",   "00100", 2},
+{"NOR",  "00101", 3},
+{"AND",  "00110", 3},
+{"NAND", "00111", 4},
+{"XOR",  "01000", 3},
+{"XNOR", "01001", 4},
+{"NEG",  "01010", 3},
+{"<<",   "01011", 2},
+{">>",   "01100", 2},
+{"INC",  "01101", 3},
+{">",    "01110", 1},
+{"<",    "01111", 1},
+{"",     "10000", 0},
+{"==",   "10001", 2},
+{">=",   "10010", 2},
+{"<=",   "10011", 2},
+{"!=",   "10100", 2},
+{"DEC",  "10101", 3},
+{"COPY", "10110", 4},
+{"NUM",  "10111", 3},
+{"JMP",  "11000", 3},
+{"JMPN", "11001", 4},
+{"POP",  "11010", 3},
+{"PUSH", "11011", 4},
+{"PUSHN","11100", 5},
+{"HALT", "11101", 4},
+{"",     "11110", 0},
+{"",     "11111", 0}
 };
 
 struct CODES A[11] = {
-{"NUL", "0000", 3},
-{"IO",  "0001", 2},
-{"RA",  "0010", 2},
-{"RB",  "0011", 2},
-{"RC",  "0100", 2},
-{"RD",  "0101", 2},
-{"RE",  "0110", 2},
-{"MEM", "0111", 3},
-{"RP",  "1000", 2},
-{"IP",  "1001", 2},
-{"CFLAG","1010",5}
+{"NUL",  "0000", 3},
+{"IO",   "0001", 2},
+{"RA",   "0010", 2},
+{"RB",   "0011", 2},
+{"RC",   "0100", 2},
+{"RD",   "0101", 2},
+{"RE",   "0110", 2},
+{"MEM",  "0111", 3},
+{"RP",   "1000", 2},
+{"IP",   "1001", 2},
+{"CFLAG","1010", 5}
 };
 
 void to_bin(int num, char * output){
@@ -156,12 +166,13 @@ int dec(char * str, int line){
 	return res;
 }*/
 
-bool step(uint8_t * reg, uint8_t * ram, uint8_t * code){
+bool step(uint8_t * reg, uint8_t * ram, uint8_t * u_out, uint8_t * code){
 	uint8_t *a = reg+*(code+1);
 	uint8_t *b = reg+*(code+2);
 	uint8_t *c = reg+*(code+3);
 	uint8_t rp = *(reg+RP);
 	uint8_t mem = *(reg+MEM);
+	uint8_t io = *(reg+IO);
 
 	switch(*code){
 		case 1:
@@ -268,8 +279,12 @@ bool step(uint8_t * reg, uint8_t * ram, uint8_t * code){
 		default:
 			break;
 	}
+	// If MEM or RAM had been changed
 	if(rp!=*(reg+RP)){ *(reg+MEM) = *(ram+*(reg+RP)); }
 	else if(mem != *(reg+MEM)){ *(ram+rp) = *(reg+MEM); }
+	// If IO had been changed by CPU
+	if(io!=*(reg+IO)){ *u_out = *(reg+IO); *(reg+IO)=io; }
+
 	return false;
 }
 
@@ -327,7 +342,7 @@ void UI_construct(char * out, char * line, uint8_t * reg){
 		sprintf(&out[len+1], "%s: %d", A[i].CMD, *(reg+i));
 	}
 }
-
+/*
 btr_string to_btr_string(char * str){
 	int size = strlen(str);
 	char string1[size];
@@ -347,35 +362,59 @@ void user_translate(char * str, int * args){
 		}
 	}
 }
+*/
+
+void activate_cmd(int cmd){
+	if(cmd<2){ //step
+	} else if(cmd < 4){ //continue
+	} else if(cmd < 6){ //register
+	} else if(cmd < 8){ //break
+	} else if(cmd < 10){//put
+	} else { //default
+	}
+
+}
+
+void debug_cmd(char *str){
+	char * word = strtok(str, " ");
+	for(int i = 0; i<U_CODE_SIZE){
+		if(strlen(word)!=u_cmd[i].size){ continue; }
+		if(strcmp(word, u_cmd[i].name)==0){
+			activate_cmd(i);
+		}
+	}
+}
 
 int main(int argc, char *argv[]){
 	if(argc<2){ HELP(); return 0; }
-	char * filename;
+	char filename[255];
 	strcpy(filename, argv[1]);
+	FILE * CODE = fopen(filename, "r");
+	if(CODE==NULL){ 
+		printf("File not found!\n"); 
+		return 0; 
+	}
+
 	uint8_t * REGISTERS = malloc(sizeof(uint8_t)*11);
 	uint8_t * RAM = malloc(sizeof(uint8_t)*64);
 	*(REGISTERS+IP) = 0;
 	*(REGISTERS+CFLAG) = 0;
 
 	uint8_t * code_line = malloc(sizeof(uint8_t)*4);
+	uint8_t user_output = 0;
 	char * assembly_line = malloc(255);
 
-	FILE * CODE = fopen(filename, "r");
-	if(CODE==NULL){ printf("File not found!\n"); 
-		free(REGISTERS);
-		free(RAM);
-		return 0; 
-	}
+	
 
 	char line[25];
 	char UI[256];
 	bool is_halt = false;
 	uint8_t ip = 0;
-	char interrupt[255];
+	char debug[255];
 	while(true){
 		if(is_halt){ 
 			is_halt=false;  
-			scanf("%s", &interrupt);
+			scanf("%s", debug);
 			//user_translate();
 			//user_act();
 		}
@@ -386,7 +425,7 @@ int main(int argc, char *argv[]){
 		line[16]='\0';
 		deconstruct(line, code_line);
 		reconstruct(code_line, assembly_line);
-		is_halt = step(REGISTERS, RAM, code_line);
+		is_halt = step(REGISTERS, RAM, &user_output, code_line);
 		UI_construct(UI, assembly_line, REGISTERS);
 		printf("%s\n", UI);
 		if(ip!=*(REGISTERS+IP)){ 
