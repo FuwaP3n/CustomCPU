@@ -7,6 +7,7 @@ CURRENT FOCUS:
 Current tasks:
 - Add increment and decrement to architecture
 - IO system for emulator
+- rewrite asm and part of emu for using func.h
 
 TEST:
 - Overall function test

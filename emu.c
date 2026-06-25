@@ -27,9 +27,12 @@ typedef struct {
 
 #define U_CODE_SIZE = 10
 typedef struct {
-	char name[10];
+	char name[U_CODE_SIZE];
 	int size;
 } user_codes;
+
+bool is_halt = false;
+uint8_t breakpoints[256];
 
 user_codes u_cmd[U_CODE_SIZE] = {
 {"step",    4},
@@ -365,11 +368,14 @@ void user_translate(char * str, int * args){
 */
 
 void activate_cmd(int cmd){
-	if(cmd<2){ //step
+	if(cmd<2){ is_halt = true; //step
 	} else if(cmd < 4){ //continue
 	} else if(cmd < 6){ //register
 	} else if(cmd < 8){ //break
+		char * word = strtok(NULL, " ");
+		
 	} else if(cmd < 10){//put
+	} else if(cmd < 12){//run
 	} else { //default
 	}
 
@@ -408,7 +414,6 @@ int main(int argc, char *argv[]){
 
 	char line[25];
 	char UI[256];
-	bool is_halt = false;
 	uint8_t ip = 0;
 	char debug[255];
 	while(true){
